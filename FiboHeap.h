@@ -9,14 +9,10 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <limits>
 using namespace std;
 //Implementar constructores de copia, y con initializer list
 
-
-#include<iostream>
-#include<vector>
-#include<math.h>
-using namespace std;
 
 
 template<typename T>
@@ -27,17 +23,21 @@ private:
     int n;
 
 public:
-    //METODOS
     Fiboheap():rootlist(nullptr), n(0){}
     void insert(T data);
     void ExtractMin();
     void Consolidar();
     void display();
     void LinkHeap(Node<T>* n1, Node<T>* n2);
-    //void Decrase key()
-    // Cut
-    // Cascade cut
-    // Print
+
+    void Decrase_key(Node<T>* x, T k);
+    void Cut(Node<T>* x, Node<T>* y);
+    void Cascade_cut(Node<T>* y);
+    void delete_key(Node<T>* x);
+    void print();
+    void printeo(Node<T>* x, int depth);
+    Node<T>* findNode(T val);
+    Node<T>* findNodeRecursive(Node<T>* node, T value, int depth);
 
     T findMin(){
         return ptr_min->data;
@@ -46,7 +46,7 @@ public:
     bool isEmpty(){return (n==0);}
 
     //template<typename T>
-    friend Fiboheap<T> Union(Fiboheap<T> f1, Fiboheap<T> f2){ //FUNCIONA
+    friend Fiboheap<T> Union(Fiboheap<T> f1, Fiboheap<T> f2){ //FUNCIONA PERO ARREGLAR XD Cuando con puntero y sin puntero
         //PASOS
         //Vemos quien es el menor de los minimos de los dos fiboHeap y mantenemos su puntero
         //Luego unimos las rootlist de cada fiboheap
@@ -98,13 +98,22 @@ public:
 
     }
 
-    ~Fiboheap(){}
+    ~Fiboheap() {
+        if (rootlist != nullptr) {
+            Node<T>* current = rootlist;
+            do {
+                Node<T>* next = current->right;
+                delete current;
+                current = next;
+            } while (current != rootlist);
+        }
+    }
 };
 
 
 
 template<typename T>
-void Fiboheap<T>::insert(T data){
+void Fiboheap<T>::insert(T data){ //NO ES
     Node<T>* newnodo = new Node<T>(data);
     newnodo->left = newnodo->right = newnodo;
 
@@ -117,12 +126,18 @@ void Fiboheap<T>::insert(T data){
         rootlist->left->right = newnodo;
         rootlist->left = newnodo;
 
+        /*(ptr_min->left)->right = newnodo;
+         newnodo->right = ptr_min;
+         newnodo->left = ptr_min->left;
+         ptr_min->left = newnodo;*/
         // Actualiza ptr_min si el valor del nuevo nodo es menor
         if (ptr_min->data > data) {
             ptr_min = newnodo;
         }
     }
+
     n++;
+
 }
 
 template<typename T>
@@ -151,13 +166,13 @@ void Fiboheap<T>::LinkHeap(Node<T>* n1, Node<T>* n2){
     //OBS: Solo unen los hijos mas no los nietos xd
     if(n1->child == nullptr){
         n1->child = n2;
+    }else{
+        //Conseguir el tail
+        n2->left = n1->child->left;
+        n2->right = n1->child;
+        (n1->child)->left->right = n2;
+        n1->child->left = n2;
     }
-    //Conseguir el tail
-    n2->left = n1->child->left;
-    n2->right = n1->child;
-    (n1->child)->left->right = n2;
-    n1->child->left = n2;
-
 
 
     if(n2->data < n1->child->data){
@@ -165,6 +180,7 @@ void Fiboheap<T>::LinkHeap(Node<T>* n1, Node<T>* n2){
     }
 
     n1->degree += 1;
+    n2->mark = false;
 }
 
 
@@ -172,11 +188,10 @@ template<typename T>
 void Fiboheap<T>::Consolidar(){
     //El metodo de consolidacion se encarga de garantizar que ningun arbol tengan degree repetido
     //Primero recorremos todo el rootlist
-    auto tailptr  = rootlist->left;
-    auto head = rootlist->right;
+
     //Extrayendo el grado y el ptr al nodo para guardarlo en el map
     float f = (log(n)) / (log(2));
-    cout<<"F: "<< f<<endl;
+    //cout<<"F: "<< f<<endl;
     int newSizeRoot;
     int maxdegree = f;
     Node<T> *arrayDegree[maxdegree+1];
@@ -190,11 +205,11 @@ void Fiboheap<T>::Consolidar(){
     auto ptr4 = ptr1; // Variable auxiliar con el cual nos vamos a desplazar
     //Extrayendo el grado y guardando el ptr en el vector
     do{
-        //cout<<"GG"<<endl;
+
         ptr4 = ptr4->right;
         newSizeRoot = ptr1->degree;
-        //cout<<"DATA "<<ptr1->data<<endl;
-        //cout<<"GRADO"<<newSizeRoot<<endl;
+
+
 
         while(arrayDegree[newSizeRoot] != nullptr){
             //cout<<ptr1->data<<" "<<arrayDegree[newSizeRoot]->data <<endl;
@@ -212,8 +227,6 @@ void Fiboheap<T>::Consolidar(){
             }
             //cout<<"SS"<<endl;
             LinkHeap(ptr1, ptr2);
-            //cout<< "Hijo: "<<ptr1->child->right->left->data<<endl;
-            //cout<< "Grado ac: "<<ptr1->degree<<endl;
             //cout<<ptr1->degree<<endl;
             if (ptr1->right == ptr1) {
                 ptr_min = ptr1;
@@ -233,7 +246,6 @@ void Fiboheap<T>::Consolidar(){
         //cout<<ptr_min->data<<endl;
     } while (ptr1 != ptr_min);
 
-    //cout<<"Size final"<<newSizeRoot<<endl;
 
 
     //cout<<"1 WHILE"<<endl;
@@ -250,7 +262,7 @@ void Fiboheap<T>::Consolidar(){
     for(int i=0; i<= maxdegree; ++i){
         //Comprobar si no es nullptr
         if(arrayDegree[i] != nullptr){
-            cout<<"FF"<<arrayDegree[i]->data<<endl;
+            //cout<<"FF"<<arrayDegree[i]->data<<endl;
             arrayDegree[i]->left = arrayDegree[i];
             arrayDegree[i]->right = arrayDegree[i];
             if(rootlist != nullptr){
@@ -260,11 +272,13 @@ void Fiboheap<T>::Consolidar(){
                 rootlist->left->right = arrayDegree[i];
                 rootlist->left = arrayDegree[i];
 
+
+
                 if(ptr_min->data > arrayDegree[i]->data){
                     ptr_min = arrayDegree[i];
                 }
             }else{
-                //cout<<"A"<<endl;
+
                 rootlist= ptr_min = arrayDegree[i];
             }
 
@@ -287,13 +301,13 @@ void Fiboheap<T>::ExtractMin(){
     // En caso contrario: Que el ptr_min sea el ptr_min antiguo a la derecha
     //Usamos la funcion consolidar
     // Disminuimos el numero de nodos
+
     if(ptr_min == nullptr){
-        //Solo eliminarlo y aplicar consolidacion
-        //cout<<"GG"<<endl;
+        rootlist = nullptr;
         return;
     }else{
         auto dptrMin = ptr_min;
-        //cout<<"B"<<endl;
+
         Node<T>* ptrn = dptrMin;
         Node<T>* minchild;
 
@@ -336,10 +350,130 @@ void Fiboheap<T>::ExtractMin(){
         }
         n--;
     }
+
+}
+
+template<typename T>
+void Fiboheap<T>::Cut(Node<T>* x, Node<T>* y) {
+    if (x == x->right) {
+        y->child = nullptr;
+    } else {
+        x->left->right = x->right;
+        x->right->left = x->left;
+        if (y->child == x) {
+            y->child = x->right;
+        }
+    }
+    y->degree--;
+
+    x->left = x->right = x;
+    x->parent = nullptr;
+    x->mark = false;
+
+    x->left = rootlist->left;
+    x->right = rootlist;
+    rootlist->left->right = x;
+    rootlist->left = x;
+}
+
+template<typename T>
+void Fiboheap<T>::Cascade_cut(Node<T>* y) {
+    auto z = y->parent;
+    if (z != nullptr) {
+        if (!y->mark) {
+            y->mark = true;
+        } else {
+            Cut(y, z);
+            Cascade_cut(z);
+        }
+    }
+}
+
+template<typename T>
+void Fiboheap<T>::Decrase_key(Node<T>* x, T k) {
+    if (x->data < k) {
+        cout<<"La llave que se quiere cambiar es mucho mayor que la data actual";
+        return;
+    }
+
+    x->data = k;
+    auto y = x->parent;
+    if (y != nullptr && x->data < y->data) {
+        Cut(x, y);
+        Cascade_cut(y);
+    }
+    if (x->data < ptr_min->data) {
+        ptr_min = x;
+    }
+}
+
+template<typename T>
+void Fiboheap<T>::delete_key(Node<T>* x){
+    Decrase_key(x, numeric_limits<T>::min());
+    ExtractMin();
+}
+
+template<typename T>
+void Fiboheap<T>::printeo(Node<T>* x, int depth){
+    Node<T>* start = x;
+    do{
+        for(int i = 0; i < depth; i++){
+            cout << " ";
+        }
+        cout<<x->data<<"("<<x->degree<<")"<<endl;
+        if (x->child != nullptr) {
+            printeo(x->child, depth + 1);
+        }
+        x = x->right;
+    }while (x != start);
+}
+
+template<typename T>
+void Fiboheap<T>::print(){
+    if(ptr_min == nullptr){
+        cout<<"Empty";
+    }else{
+        printeo(rootlist,0);
+    }
 }
 
 
 
+
+template <typename T>
+Node<T>* Fiboheap<T>::findNode(T value) {
+    if (ptr_min == nullptr) {
+        // Si el fiboheap esta vacio, no se puede encontrar el nodo
+        return nullptr;
+    }
+
+    return findNodeRecursive(ptr_min, value, 0);
+}
+
+template <typename T>
+Node<T>* Fiboheap<T>::findNodeRecursive(Node<T>* node, T value, int depth) {
+    Node<T>* start = node;
+    do {
+        if (node->data == value) {
+            // Si el nodo actual tiene el valor buscado, se devuelve
+            return node;
+        }
+
+        // Buscar en los hijos del nodo actual
+        if (node->child != nullptr) {
+            Node<T>* childNode = findNodeRecursive(node->child, value, depth + 1);
+            if (childNode != nullptr) {
+                // Si se encuentra el nodo en los hijos, se devuelve
+                return childNode;
+            }
+        }
+
+        node = node->right;
+    } while (node != start);
+
+    //Si no se encontro el nodo en la lista de raíces ni en los hijos, se devuelve nullptr
+    return nullptr;
+}
 
 
 #endif //FIBOHEAP_FIBOHEAP_H

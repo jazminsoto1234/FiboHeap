@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/Jazmin/CLionProjects/fiboheap/FiboHeap.cpp
+FiboHeap.h
+C:/Users/Jazmin/CLionProjects/fiboheap/FiboHeap.h
+
+C:/Users/Jazmin/CLionProjects/fiboheap/FiboHeap.h
+Node.h
+C:/Users/Jazmin/CLionProjects/fiboheap/Node.h
+unordered_map
+-
+vector
+-
+iostream
+-
+math.h
+-
+limits
+-
+
+C:/Users/Jazmin/CLionProjects/fiboheap/Node.h
+
+C:/Users/Jazmin/CLionProjects/fiboheap/main.cpp
+iostream
+-
+FiboHeap.h
+C:/Users/Jazmin/CLionProjects/fiboheap/FiboHeap.h
+
