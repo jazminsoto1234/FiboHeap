@@ -308,6 +308,7 @@ void Fiboheap<T>::ExtractMin(){
     }else{
         auto dptrMin = ptr_min;
 
+
         Node<T>* ptrn = dptrMin;
         Node<T>* minchild;
 
